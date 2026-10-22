@@ -1,11 +1,12 @@
 <?php
 require __DIR__.'/../src/dedupe.php';
 require __DIR__.'/../src/validate.php';
+require __DIR__.'/../src/database.php';
 try{
  need(isset($argv[1]),'Usage: ingest.php bundle.json [config.php]');
  $bundle=validateBundle(json_decode(file_get_contents($argv[1]),true));
  $config=require (isset($argv[2])?$argv[2]:__DIR__.'/../data/database.local.php');
- $db=new PDO($config['dsn'],$config['user'],$config['password'],array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_EMULATE_PREPARES=>false));
+ $db=openDatabase($config);
  $db->beginTransaction();
  $history=array_map(function($body){return json_decode($body,true);},$db->query('SELECT body FROM entries ORDER BY edition_date,id')->fetchAll(PDO::FETCH_COLUMN));
  $merged=mergeUnseenItems($bundle['items'],$history,$bundle['date']);

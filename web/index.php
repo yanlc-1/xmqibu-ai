@@ -2,10 +2,11 @@
 require __DIR__.'/../src/validate.php';
 require __DIR__.'/../src/render.php';
 require __DIR__.'/../src/web.php';
+require __DIR__.'/../src/database.php';
 try{
  if(!is_readable('/secrets/reader.php'))throw new RuntimeException('Database reader config unavailable');
  $config=require '/secrets/reader.php';
- $db=new PDO($config['dsn'],$config['user'],$config['password'],array(PDO::ATTR_ERRMODE=>PDO::ERRMODE_EXCEPTION,PDO::ATTR_EMULATE_PREPARES=>false));
+ $db=openDatabase($config);
  $path=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);
  $response=renderRequest($db,$path);
  http_response_code($response['status']);

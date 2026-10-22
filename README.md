@@ -7,8 +7,9 @@
 - [OpenSpec](openspec/changes/add-ai-digest/proposal.md)
 
 本地：`npm ci --ignore-scripts` → `npm run collect` → 基于原文编写当日bundle → `php -n scripts/preview.php data/edition-YYYY-MM-DD.json .preview`。
+先按 [部署说明](docs/OPERATIONS.md) 填写本地私有配置 `data/database.local.php`；数据库名称固定为 `xmqibu-ai`。已有库首次部署可执行 `php scripts/check-database.php`、`php scripts/install-schema.php`，再迁移旧站历史内容。
 验证：`npm test`；`npm audit --audit-level=low`；`php -n tests/validate.php`；`php -n tests/dedupe.php`；`php tests/web.php`；`openspec validate update-db-driven-deployment --strict`。
 预览：`python3 -m http.server 18763 --bind 127.0.0.1 --directory .preview`。
-正式内容发布：`scripts/publish-local.sh data/edition-YYYY-MM-DD.json`。本地通过 SSH 隧道写入 MySQL，线上容器只读展示。日常任务不修改站点代码或服务器配置。
+正式内容发布：`scripts/publish-local.sh data/edition-YYYY-MM-DD.json`。本地连接用户配置的 `xmqibu-ai` MySQL，线上容器只读展示。日常任务不修改站点代码或服务器配置。
 
 代码通过 GitHub `main` 管理；服务器拉取代码并构建版本化 Web 镜像，按健康检查切换容器。数据库凭据和内容文件不进 Git，详见[部署说明](docs/OPERATIONS.md)。

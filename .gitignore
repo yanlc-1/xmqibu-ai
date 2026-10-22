@@ -2,5 +2,6 @@ node_modules/
 site/
 data/*
 !data/.gitkeep
+!data/database.local.example.php
 config.private.php
 .preview/

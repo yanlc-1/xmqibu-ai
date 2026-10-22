@@ -18,12 +18,12 @@ Github候选包括全站及Python、TypeScript、Rust、Go周趋势。使用 `we
 repo额外包含 weeklyStars/totalStars（整数）、rankingSource、language；publishedAt采用采集时刻，含义为本期项目快照时间。
 输出 bundle: {date:'YYYY-MM-DD',collectedAt:ISO,items:[...],warnings:[...]}; 不给新闻自行填写score，服务端会计算。
 初次尝试失败后重跑同一天：先导出旧bundle，保留本日已发布且仍有效的条目，按 kind+url 合并，避免部分来源失败将已有内容抹掉。可使用以下只读命令导出（替换已校验的日期字面量，不插入任意shell输入）：
-`./scripts/with-db-tunnel.sh php scripts/export.php YYYY-MM-DD data/database.local.php`
+`php scripts/export.php YYYY-MM-DD data/database.local.php`
 若采集没有有效新内容或所有主要来源失败，保留现站，报告失败；不要清空。
 
 ## 3. 发布与验证
 执行 `php -n scripts/preview.php data/edition-YYYY-MM-DD.json .preview` 校验并生成本地预览。
-执行 `scripts/publish-local.sh data/edition-YYYY-MM-DD.json`：本地通过 SSH 隧道连接 MySQL，校验→历史去重→事务写入。网站容器只用只读账号查询已提交数据，不上传 bundle、不在服务器渲染静态页面。严禁把私密配置、密码或整个服务器目录写入日志或 Git。
+执行 `scripts/publish-local.sh data/edition-YYYY-MM-DD.json`：本地使用私有数据库配置连接 `xmqibu-ai`，校验→历史去重→事务写入。网站容器只用只读账号查询已提交数据，不上传 bundle、不在服务器渲染静态页面。严禁把私密配置、密码或整个服务器目录写入日志或 Git。
 检查 `https://xmqibu.com/health.json` 的edition、news、repos是否符合本次结果；抽查新闻及项目详情、原文链接。失败时不得声称更新成功；不要自动修改服务器配置或重建服务，保留已有发布版本并报告具体阻塞。
 日常只执行内容流程，不修改站点代码、不升级依赖、不改DNS或TLS。密钥仅在服务器私密目录。不得发消息到外部群或邮箱。
 已有内容完整相同且没有新增时保持安静；有新内容成功发布时简要通知数量和网站链接；失败或需要用户操作时通知。
@@ -33,7 +33,7 @@ repo额外包含 weeklyStars/totalStars（整数）、rankingSource、language�
 
 ## 强制规则：AI筛选与跨期去重（2026-10-21更新）
 开始时必须读取最新全量发布历史（不只昨天）：
-`./scripts/with-db-tunnel.sh php scripts/export.php --history data/database.local.php > data/history.json`
+`php scripts/export.php --history data/database.local.php > data/history.json`
 历史读取失败则停止发布并通知，不能当作空历史。collect脚本也会自动刷新此历史，先过滤仓库再选Top候选，避免前20名全重复却漏掉后续新项目。
 新闻只取以AI为核心的事件。优先模型发布（如DeepSeek/MiniMax等）、推理引擎、AI编程、Agent、有意思的AI实验和落地应用；不要机械照抄用户示例的标题、Star数或阅读量，也不要把传闻当作已发布。重要性与趣味性都应有事实依据。
 排除普通手机/电脑发布、购物优惠、股票赠送、城市人口、名言鸡汤等；综合早报即使含AI词也不整体收录，可找到其中AI事件的独立报道后核验。关键词仅是候选筛选，阅读原文后仍要做语义审核。
