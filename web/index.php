@@ -4,9 +4,13 @@ require __DIR__.'/../src/render.php';
 require __DIR__.'/../src/web.php';
 require __DIR__.'/../src/database.php';
 try{
+ if(!in_array($_SERVER['REQUEST_METHOD'],array('GET','HEAD'),true)){
+  http_response_code(405);header('Allow: GET, HEAD');exit;
+ }
  if(!is_readable('/secrets/reader.php'))throw new RuntimeException('Database reader config unavailable');
  $config=require '/secrets/reader.php';
  $db=openDatabase($config);
+ $db->exec('SET SESSION TRANSACTION READ ONLY');
  $path=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);
  $response=renderRequest($db,$path);
  http_response_code($response['status']);
