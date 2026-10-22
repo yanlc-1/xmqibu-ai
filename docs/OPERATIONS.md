@@ -8,7 +8,7 @@
 旧容器 xmqibu 已停止，原目录 /www/xmqibu 保留。没有删除旧站文件。
 
 ## 代码发布
-本地修改先运行 `npm test`、`php -n tests/validate.php`、`php -n tests/dedupe.php` 和 PHP 语法检查，提交并推送到 GitHub `main`。服务器 crontab 每 5 分钟执行 `scripts/deploy-server.sh`：拉取 `main`，确认服务器无本地代码修改，检出新提交，再从 MySQL 现有内容重建一个静态 release 并原子切换。失败时还原旧代码，旧页面继续服务；下一轮可重试。部署记录在 `/var/log/xmqibu-ai-deploy.log`，手动执行相同脚本可立即发布。
+本地修改先运行 `npm test`、`php -n tests/validate.php`、`php -n tests/dedupe.php` 和 PHP 语法检查；GitHub CI 会重复这些检查。提交并推送到 GitHub `main`。服务器 crontab 每 5 分钟执行 `scripts/deploy-server.sh`：拉取 `main`，确认服务器无本地代码修改，检出新提交，再从 MySQL 现有内容重建一个静态 release 并原子切换。失败时还原旧代码，旧页面继续服务；下一轮可重试。部署记录在 `/var/log/xmqibu-ai-deploy.log`，手动执行相同脚本可立即发布。
 `data/`、`site/` 和 `/www/xmqibu-ai-private/` 不进 Git；其中 `site/current` 是 Nginx 服务目录，数据库文件仍在 `/www/xmqibu-ai-private/mysql`。不要在服务器直接修改跟踪文件，或使用 `git clean` 删除运行数据。
 
 ## 内容发布
