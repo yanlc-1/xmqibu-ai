@@ -14,5 +14,7 @@ jobs:
           cache: npm
       - run: npm ci --ignore-scripts
       - run: npm test
+      - run: npm audit --audit-level=low
       - run: php -n tests/validate.php && php -n tests/dedupe.php
-      - run: for file in scripts/*.php src/*.php; do php -n -l "$file" || exit 1; done
+      - run: php tests/web.php
+      - run: for file in scripts/*.php src/*.php web/*.php; do php -n -l "$file" || exit 1; done

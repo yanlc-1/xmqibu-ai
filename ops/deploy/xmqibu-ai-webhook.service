@@ -1,0 +1,14 @@
+[Unit]
+Description=Xmqibu AI GitHub deployment webhook
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/xmqibu-ai-webhook.env
+ExecStart=/usr/bin/python /www/xmqibu-ai/ops/deploy/github-webhook-server.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

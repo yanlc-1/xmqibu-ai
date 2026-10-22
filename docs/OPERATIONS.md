@@ -1,25 +1,20 @@
 # 部署与维护
-源码仓库 https://github.com/yanlc-1/xmqibu-ai ，`main` 为服务器部署来源。本地工作目录 `/opt/www/xmqibu-ai`；服务器检出目录 `/www/xmqibu-ai`；域名 https://xmqibu.com 和 https://www.xmqibu.com 。
-服务器：现有SSH入口 root@111.231.204.222:34185，复用本机密钥，禁止将密钥写入仓库。
-数据库：独立容器 xmqibu-ai-mysql / MySQL5.7，专用网络 xmqibu-ai-private（internal），无宿主机端口映射；数据库 xmqibu_ai，账户仅有该库权限。384MB内存上限。
-存储：editions 保存原始当期JSON，entries 保存可检索条目和按日Star快照，collection_runs 保存成功运行记录。失败由发布进程非零退出和Codex通知报告。
-网站：PHP CLI短时容器执行，运行完自动退出；静态站不依赖PHP常驻。HTTPS由宿主机Nginx直接服务 /www/xmqibu-ai/site/current 。HTTP容器 xmqibu-ai-web 跳转HTTPS，并保留ACME和verification.html验证路径。
-私密目录 `/www/xmqibu-ai-private`（权限700）保存数据库文件、运行凭据、旧站压缩备份及原HTTPS配置；禁止复制或输出凭据。源代码与数据库均不在Web根目录中。
-旧容器 xmqibu 已停止，原目录 /www/xmqibu 保留。没有删除旧站文件。
+源码仓库 https://github.com/yanlc-1/xmqibu-ai ，主分支 `main`。本地目录 `/opt/www/xmqibu-ai`，服务器检出目录 `/www/xmqibu-ai`，域名 https://xmqibu.com 。
 
-## 代码发布
-本地修改先运行 `npm test`、`php -n tests/validate.php`、`php -n tests/dedupe.php` 和 PHP 语法检查；GitHub CI 会重复这些检查。提交并推送到 GitHub `main`。服务器 crontab 每 5 分钟执行 `scripts/deploy-server.sh`：拉取 `main`，确认服务器无本地代码修改，检出新提交，再从 MySQL 现有内容重建一个静态 release 并原子切换。失败时还原旧代码，旧页面继续服务；下一轮可重试。部署记录在 `/var/log/xmqibu-ai-deploy.log`，手动执行相同脚本可立即发布。
-`data/`、`site/` 和 `/www/xmqibu-ai-private/` 不进 Git；其中 `site/current` 是 Nginx 服务目录，数据库文件仍在 `/www/xmqibu-ai-private/mysql`。不要在服务器直接修改跟踪文件，或使用 `git clean` 删除运行数据。
+## 数据库与采集
+AI 站使用 attendance 所在的 MySQL 实例（服务器 `mysql4437` 容器、外网端口 `4437`）中的独立 `xmqibu_ai` 数据库。与 attendance 数据表和账号隔离。`entries` 保存正文与来源，`editions` 保存每期 bundle，`collection_runs` 保存成功记录。Web 容器只配置 SELECT 账号；本地采集使用独立写入账号，通过 SSH 隧道连接到服务器的 `127.0.0.1:4437`，不在源码或日志中存储密码。外部 MySQL 客户端如需连接，使用服务器地址、端口 `4437` 和获授权的专用账号；该端口是现有实例端口，不是新开放端口。
 
-## 内容发布
-`scripts/publish-remote.sh data/edition-YYYY-MM-DD.json`，细节见 DAILY-RUNBOOK.md。
-成功判断：命令成功、health.json日期与条目数量匹配、详情页可读。不要将仅有上传成功当成发布成功。
+本地每日北京时间 12:00 的 Codex 任务先从数据库读取全量历史，筛选 AI 新闻与新项目，生成并核验 JSON，然后执行 `scripts/publish-local.sh data/edition-YYYY-MM-DD.json`。写入在单个 MySQL 事务内完成，失败保留此前内容。线上 PHP 页面每次只读取已提交的数据，不运行采集，不接收发布请求，也不生成静态 release。`scripts/publish-remote.sh` 是兼容旧任务的本地入口，转调用同一个本地写入脚本。
 
-## 回滚页面
-在服务器使用 `ls -lt /www/xmqibu-ai/site/releases` 找到明确的上一成功版本。创建临时相对软链指向 `releases/<已确认版本>`，再 `mv -Tf` 原子替换 current；不得猜版本或删除数据库。页面回滚不回退MySQL历史，后续重建要明确采用哪个版本的bundle。
-如恢复旧站：停止 xmqibu-ai-web，启动原 xmqibu，恢复私密目录中的 xmqibu-https.conf.original，再 nginx -t 和 reload。注意原HTTPS配置本来就指向失效旧服务，仅用于恢复原状态，并不保证HTTPS正常。
+本地专用配置保存在被 Git 忽略的 `data/database.local.php`；服务器只读配置在 `/www/xmqibu-ai-private/reader.php`。本地配置中的 DSN 端口应从 `getenv('XMQIBU_AI_DB_PORT')` 读取，由隧道脚本在每次调用时设置，固定写 `4437` 将无法连接本地隧道。示例 DSN：`'mysql:host=127.0.0.1;port='.getenv('XMQIBU_AI_DB_PORT').';dbname=xmqibu_ai;charset=utf8mb4'`。两份配置都应返回 `dsn`、`user`、`password` 三个字段。不要将真实配置提交到 Git、复制到聊天或日志。数据库数据持久化属于 MySQL 实例，GitHub 不包含数据。
 
-## 备份与限制
-上线时保留了原站压缩备份；新内容JSON同时存在本地与服务器data目录，MySQL数据持久化挂载。尚未配置异地数据库备份，应在后续运维阶段补齐。GitHub 只保存代码，不保存 MySQL 数据和每日内容 JSON。
-每次发布保留静态release；长期运行时需保留近期成功版本并清理更早的构建产物，不能删除 current 指向目录。
-当前数据源不覆盖全网，GitHub周趋势也不是全仓库严格排名。说明必须保留。任务在本机Codex运行，非服务器定时程序。
+## 代码上线
+与 attendance 一样：GitHub `main` 更新触发签名校验 Webhook；服务器拉取源码、构建版本化 Docker 镜像、启动候选容器并检查 `/health.json`，通过后替换正式容器 `xmqibu-ai-app`。正式容器仅监听服务器 `127.0.0.1:19092`，宿主 Nginx 负责 HTTPS 与反向代理。Webhook 服务仅监听 `127.0.0.1:19095`，入口为 `https://xmqibu.com/-/github-webhook`，只接受签名有效、仓库为 `yanlc-1/xmqibu-ai`、分支为 `main` 的 push。服务器还保留每 5 分钟检查新提交的 cron 作为兜底。
+
+部署脚本：`ops/deploy/deploy-from-git.sh`；镜像构建：`ops/deploy/build-image.sh`；容器切换与健康检查：`ops/deploy/deploy-image.sh`；上一镜像回滚：`ops/deploy/rollback-image.sh`。部署日志 `/var/log/xmqibu-ai-deploy.log`。仓库 CI 运行 Node、PHP 测试和 PHP 语法检查；上线后还应检查 GitHub CI、服务器提交、容器健康、网页和详情页。
+
+## 切换与回滚
+首次切换前保留旧静态站 `/www/xmqibu-ai/site/current`、原专用数据库容器 `xmqibu-ai-mysql` 和 Nginx 配置备份。先验证新数据库记录数、内容哈希、只读账号及候选 Web 容器，再将宿主 Nginx 切到 `ops/deploy/host-nginx.conf` 并执行 `nginx -t`、reload。失败可恢复备份 Nginx 配置，旧静态页面继续可用。后续镜像失败由部署脚本保留或恢复旧容器；也可手动执行 `ops/deploy/rollback-image.sh`。数据库迁移后不要再向旧容器写入，否则回滚必须先评估数据差异。
+
+## 已知限制
+当前 MySQL 实例的外网 `4437` 端口已开放，AI 站账号应保持独立且最小权限；本地自动采集仍通过 SSH 隧道，避免数据库口令经公网明文传输。尚未配置异地数据库备份。Web 镜像沿用服务器已有的 PHP 7.1/Nginx 基础镜像以匹配 attendance 的部署环境，已关闭 PHP 文件上传、POST 数据读取和 session upload progress；后续应升级到受支持的 PHP 运行时。
