@@ -1,0 +1,14 @@
+# 2026-10-21 验收记录
+- 正式站点：https://xmqibu.com / https://www.xmqibu.com，HTTPS均200，HTTP均301。
+- 6条当天新闻、6个项目详情均生成，MySQL entries 按kind计数为news=6/repo=6，editions=1。
+- 重复发布后仍是12条；非法javascript URL整批拒绝，current软链未变化。
+- 3项Node测试通过：北京时间日界线、周增量与总Star区分、正文移除脚本。
+- 9项PHP校验测试通过：跨日、未来日期、非法URL、重复项、错误Star值、正文长度、主来源缺失、HTML转义、稳定ID。
+- OpenSpec严格校验通过。
+- 实际浏览器375、768、1440px无横向溢出；搜索Gemini返回1条、国内筛选返回1条、不匹配词返回空状态；详情原文链接、归档12条可读。
+- 生产新闻卡片统一显示北京自然日2026-10-21，详情保留原文时间并转北京时间。
+- 两个域名ACME验证路径真实写入探针后读取成功，探针已删除；verification.html返回200。
+- private.pem、scripts/publish.php公网返回404；既有考勤管理域名仍302。
+- 当前任务ai已更新为ACTIVE，每天Asia/Shanghai 22:30。首期是本次手动全链路运行；未来定时触发尚未发生，不能视为已有执行证明。
+- The Verge RSS本次读取失败，已记录warnings；后续任务要求搜索补充来源，不把RSS失败当无新闻。
+- 无Git提交、无推送。旧站目录、旧容器、原配置及压缩备份保留。
