@@ -16,7 +16,7 @@ AI 站使用用户已建立的独立 MySQL 数据库 `xmqibu-ai`。主机、端�
 部署脚本：`ops/deploy/deploy-from-git.sh`；镜像构建：`ops/deploy/build-image.sh`；容器切换与健康检查：`ops/deploy/deploy-image.sh`；上一镜像回滚：`ops/deploy/rollback-image.sh`。部署日志 `/var/log/xmqibu-ai-deploy.log`。仓库 CI 运行 Node、PHP 测试和 PHP 语法检查；上线后还应检查 GitHub CI、服务器提交、容器健康、网页和详情页。
 
 ## 切换与回滚
-首次切换前保留旧静态站 `/www/xmqibu-ai/site/current`、原专用数据库容器 `xmqibu-ai-mysql` 和 Nginx 配置备份。先验证新数据库记录数、内容哈希、只读账号及候选 Web 容器，再将宿主 Nginx 切到 `ops/deploy/host-nginx.conf` 并执行 `nginx -t`、reload。失败可恢复备份 Nginx 配置，旧静态页面继续可用。后续镜像失败由部署脚本保留或恢复旧容器；也可手动执行 `ops/deploy/rollback-image.sh`。数据库迁移后不要再向旧容器写入，否则回滚必须先评估数据差异。
+首次切换前保留旧静态站 `/www/xmqibu-ai/site/current`、原专用数据库容器 `xmqibu-ai-mysql` 和宿主 Nginx 配置 `/usr/local/nginx/conf/vhost/xmqibu-https.conf` 的备份。先验证新数据库记录数、内容哈希、只读账号及候选 Web 容器，再将宿主 Nginx 切到 `ops/deploy/host-nginx.conf` 并执行 `/usr/local/nginx/sbin/nginx -t`、reload。失败可恢复备份 Nginx 配置，旧静态页面继续可用。后续镜像失败由部署脚本保留或恢复旧容器；也可手动执行 `ops/deploy/rollback-image.sh`。数据库迁移后不要再向旧容器写入，否则回滚必须先评估数据差异。
 
 ## 已知限制
 数据库端口与网络访问由用户管理；经公网连接时应启用 MySQL TLS 并限制可访问来源。账号保持独立且最小权限。尚未配置异地数据库备份。Web 镜像沿用服务器已有的 PHP 7.1/Nginx 基础镜像以匹配 attendance 的部署环境，已关闭 PHP 文件上传、POST 数据读取和 session upload progress；后续应升级到受支持的 PHP 运行时。
