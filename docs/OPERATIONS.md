@@ -2,7 +2,7 @@
 源码仓库 https://github.com/yanlc-1/xmqibu-ai ，主分支 `main`。本地目录 `/opt/www/xmqibu-ai`，服务器检出目录 `/www/xmqibu-ai`，域名 https://xmqibu.com 。
 
 ## 数据库与采集
-AI 站使用用户已建立的独立 MySQL 数据库 `xmqibu-ai`。主机、端口和账号由用户在私有文件中配置，不再假设与 attendance 共用实例或固定端口。`entries` 保存正文与来源，`editions` 保存每期 bundle，`collection_runs` 保存成功记录。Web 容器使用只读账号；本地采集使用可读写账号。数据库建表执行 `php scripts/install-schema.php data/database.local.php`，该账号需暂有 CREATE 权限；也可由数据库管理员在 `xmqibu-ai` 库中执行 `scripts/schema.sql`。建表后撤销应用账号的 CREATE 权限。
+AI 站使用用户已建立的独立 MySQL 数据库 `xmqibu-ai`。主机、端口和账号由用户在私有文件中配置，不再假设与 attendance 共用实例或固定端口。`entries` 保存正文与来源，`editions` 保存每期 bundle，`collection_runs` 保存成功记录。本地采集使用可读写账号；Web 容器在数据库会话中强制只读，生产环境仍应为它配置仅有 SELECT 权限的独立账号。数据库建表执行 `php scripts/install-schema.php data/database.local.php`，该账号需暂有 CREATE 权限；也可由数据库管理员在 `xmqibu-ai` 库中执行 `scripts/schema.sql`。建表后撤销应用账号的 CREATE 权限。
 
 本地每日北京时间 12:00 的 Codex 任务先从数据库读取全量历史，筛选 AI 新闻与新项目，生成并核验 JSON，然后执行 `scripts/publish-local.sh data/edition-YYYY-MM-DD.json`。写入在单个 MySQL 事务内完成，失败保留此前内容。线上 PHP 页面每次只读取已提交的数据，不运行采集，不接收发布请求，也不生成静态 release。`scripts/publish-remote.sh` 是兼容旧任务的本地入口，转调用同一个本地写入脚本。
 
