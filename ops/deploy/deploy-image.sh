@@ -17,9 +17,14 @@ if docker inspect xmqibu-ai-app >/dev/null 2>&1; then
 fi
 cleanup() { docker rm -f "$candidate" >/dev/null 2>&1 || true; }
 trap cleanup EXIT HUP INT TERM
-run_app "$candidate" 19093 no "$image"
+run_app "$candidate" '' no "$image"
+candidate_address=$(docker port "$candidate" 80/tcp)
+case "$candidate_address" in
+  127.0.0.1:*) ;;
+  *) echo 'Candidate must expose a loopback port' >&2; exit 1 ;;
+esac
 sleep 2
-curl --fail --silent --show-error --max-time 10 http://127.0.0.1:19093/health.json >/dev/null
+curl --fail --silent --show-error --max-time 10 "http://$candidate_address/health.json" >/dev/null
 if [ -n "$old_image" ]; then docker stop xmqibu-ai-app >/dev/null; docker rm xmqibu-ai-app >/dev/null; fi
 if ! run_app xmqibu-ai-app 19092 yes "$image"; then
   if [ -n "$old_image" ]; then run_app xmqibu-ai-app 19092 yes "$old_image"; fi
