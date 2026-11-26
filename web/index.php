@@ -12,7 +12,7 @@ try{
  $db=openDatabase($config);
  $db->exec('SET SESSION TRANSACTION READ ONLY');
  $path=parse_url($_SERVER['REQUEST_URI'],PHP_URL_PATH);
- $response=renderRequest($db,$path);
+ $response=renderRequest($db,$path,$_GET['from'] ?? null);
  http_response_code($response['status']);
  header('Content-Type: '.$response['contentType']);
  header('Cache-Control: no-cache');

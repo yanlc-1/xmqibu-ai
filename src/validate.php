@@ -20,7 +20,7 @@ function validateBundle($b){
  need(is_array($i['sections'])&&count($i['sections'])>=2&&count($i['sections'])<=8,'Invalid sections');$len=0;
  foreach($i['sections'] as $s){need(isset($s['heading'],$s['text'])&&is_string($s['heading'])&&is_string($s['text']),'Invalid section');$len+=textLength($s['text']);need(textLength($s['text'])<2200,'Section too long');}need($len>=160&&$len<=6000,'Detailed introduction needs 160–6000 characters');
  need(is_array($i['evidence'])&&count($i['evidence'])>=1&&count($i['evidence'])<=12,'Missing evidence');$domains=array();$primary=false;
- foreach($i['evidence'] as $e){need(isset($e['url'],$e['name'])&&validUrl($e['url'])&&is_string($e['name']),'Invalid evidence');$domains[parse_url($e['url'],PHP_URL_HOST)]=true;if($e['url']===$i['url'])$primary=true;}need($primary,'Primary source missing from evidence');
+ foreach($i['evidence'] as $e){if(isset($e['role']))need(in_array($e['role'],array('官方公告','官方说明','原始研究','监管原文','直接采访','现场报道','媒体报道'),true),'Invalid evidence role');need(isset($e['url'],$e['name'])&&validUrl($e['url'])&&is_string($e['name']),'Invalid evidence');$domains[parse_url($e['url'],PHP_URL_HOST)]=true;if($e['url']===$i['url'])$primary=true;}need($primary,'Primary source missing from evidence');
  if($i['kind']==='repo'){
  need(parse_url($i['url'],PHP_URL_HOST)==='github.com'&&preg_match('~^https://github.com/[\w.-]+/[\w.-]+/?$~',$i['url']),'Invalid repo URL');
  need(isset($i['weeklyStars'],$i['totalStars'],$i['rankingSource'])&&is_int($i['weeklyStars'])&&$i['weeklyStars']>=0&&is_int($i['totalStars'])&&$i['totalStars']>=$i['weeklyStars'],'Invalid Star counts');

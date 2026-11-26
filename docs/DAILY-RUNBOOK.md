@@ -14,6 +14,7 @@ Github候选包括全站及Python、TypeScript、Rust、Go周趋势。使用 `we
 
 ## 2. 中文整理
 参考 data/edition-2026-10-21.json 和 src/validate.php 合约。
+为新闻 evidence 中已读的具体原文添加 role。可选值为“官方公告、官方说明、原始研究、监管原文、直接采访、现场报道、媒体报道”。按对核心事实的证明力排列一手材料；详情保留全部证据。历史无角色时用中性来源标签。
 每条包含 kind(news/repo)、title、category、region、url、source、publishedAt(带时区ISO)、intro(50–100字)、sections(2–4节，每节heading/text)、evidence(name/url)。sections合计目标300–600中文字，最低160字；所有细节有原文依据，不靠免责声明填充。区分事实、报道转述和本站解读。仅做独立摘要，不转载整篇。
 repo额外包含 weeklyStars/totalStars（整数）、rankingSource、language；publishedAt采用采集时刻，含义为本期项目快照时间。
 输出 bundle: {date:'YYYY-MM-DD',collectedAt:ISO,items:[...],warnings:[...]}; 不给新闻自行填写score，服务端会计算。

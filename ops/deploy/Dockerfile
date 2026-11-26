@@ -4,6 +4,7 @@ COPY src /app/src
 COPY web /app/web
 COPY public/style.css /app/web/style.css
 COPY public/app.js /app/web/app.js
+COPY public/brief.css public/brief.js /app/web/
 COPY ops/deploy/nginx-site.conf /usr/local/nginx/conf/server/xmqibu-ai.conf
 COPY ops/deploy/entrypoint.sh /app/entrypoint.sh
 RUN chmod 755 /app/entrypoint.sh \

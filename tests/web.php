@@ -18,3 +18,16 @@ foreach(array('/','/news/','/repos/','/archive/','/archive/'.$bundle['date'].'/'
 }
 if(renderRequest($db,'/read/not-found/')['status']!==404)throw new Exception('missing article not 404');
 echo "PASS database-backed routes\n";
+$news = array_values(array_filter($bundle['items'], function ($i) { return $i['kind']==='news'; }))[0];
+$issuePath = briefEditionUrl($bundle['date']);
+$front = renderRequest($db, $issuePath);
+need($front['status'] === 200 && strpos($front['body'],'data-token="'.h($news['id']).'-') !== false, 'Missing real news on dated brief');
+need(strpos($front['body'], 'data-token="'.h($bundle['items'][0]['id']).'-') === false, 'Repository entered reading progress');
+need(renderRequest($db,'/brief/2026-01-01/')['status'] === 404, 'Unknown edition should return 404');
+need(briefSource($news)['role'] === '报道来源', 'Legacy evidence labeled firsthand');
+$news['evidence'][] = array('name'=>'官方说明','role'=>'官方说明','url'=>'https://example.org/original');
+need(briefSource($news)['url'] === 'https://example.org/original', 'Direct evidence not selected');
+need(strpos(briefArticle($news),'https://example.org/original') !== false, 'Missing original link');
+$empty = briefFront(array('edition_date'=>$bundle['date'],'collected_at'=>$bundle['collectedAt']), array(), null, null, '/');
+need(strpos($empty,'本期暂无已发布新闻') !== false, 'Missing empty state');
+echo "PASS real editions, source attribution and reading tokens\n";
